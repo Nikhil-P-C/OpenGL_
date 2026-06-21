@@ -1,0 +1,10 @@
+^C:\USERS\LENOVO\DESKTOP\PROJECT\CPP\OPENGL\VENDOR\GLEW-2.3.1\BUILD\CMAKE\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/LENOVO/Desktop/project/cpp/OpenGl -BC:/Users/LENOVO/Desktop/project/cpp/OpenGl/build --check-stamp-file C:/Users/LENOVO/Desktop/project/cpp/OpenGl/build/vendor/glew-2.3.1/build/cmake/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

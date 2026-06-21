@@ -1,0 +1,11 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/LENOVO/Desktop/project/cpp/OpenGl/build/cmake_install.cmake",
+		"C:/Users/LENOVO/Desktop/project/cpp/OpenGl/build/vendor/glew-2.3.1/build/cmake/cmake_install.cmake",
+		"C:/Users/LENOVO/Desktop/project/cpp/OpenGl/build/vendor/glfw-3.4/cmake_install.cmake",
+		"C:/Users/LENOVO/Desktop/project/cpp/OpenGl/build/vendor/glfw-3.4/src/cmake_install.cmake",
+		"C:/Users/LENOVO/Desktop/project/cpp/OpenGl/build/vendor/glfw-3.4/docs/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
