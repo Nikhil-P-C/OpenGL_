@@ -10,12 +10,15 @@ add_subdirectory(
     ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glfw-3.4
 )
 
-add_executable(Engine main.cpp)
+add_executable(Engine 
+        src/main.cpp
+        src/shader/Shader.cpp)
 target_compile_definitions(Engine PRIVATE GLEW_STATIC)
 
 target_include_directories(Engine PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glfw-3.4/include
     ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glew-2.3.1/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
 target_link_libraries(Engine PRIVATE glfw glew_s)
