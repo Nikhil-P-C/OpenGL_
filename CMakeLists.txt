@@ -21,10 +21,11 @@ add_custom_command(TARGET Engine POST_BUILD
         $<TARGET_FILE_DIR:Engine>/res
 )
 target_compile_definitions(Engine PRIVATE GLEW_STATIC)
-set_target_properties(Engine PROPERTIES
-    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-)
+# set_target_properties(Engine PROPERTIES
+#     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+# )
 target_include_directories(Engine PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/vendor
     ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glfw-3.4/include
     ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glew-2.3.1/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src/include
