@@ -35,8 +35,9 @@ Shader::Shader(const std::string& path){
     }
     std::string vertexShaderString = ss[ShaderType::VERTEX].str();
     std::string fragmentShaderString = ss[ShaderType::FRAGMENT].str();
-	std::cout << "vertex:\n" << vertexShaderString << "\n";
-	std::cout << "fragment:\n" << fragmentShaderString << "\n";
+    //uncomment if needed
+	// std::cout << "vertex:\n" << vertexShaderString << "\n"; 
+	// std::cout << "fragment:\n" << fragmentShaderString << "\n";
     const char* vertexShaderSource = vertexShaderString.c_str();
     const char* fragmentShaderSource =fragmentShaderString.c_str();
 

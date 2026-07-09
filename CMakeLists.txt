@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 project(OpenGL_Example)
 set(CMAKE_CXX_STANDARD 17)
 
-
+add_subdirectory(
+    ${CMAKE_CURRENT_SOURCE_DIR}/vendor/assimp-6.0.5
+)
 add_subdirectory(
     ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glew-2.3.1/build/cmake
 )
@@ -14,6 +16,8 @@ add_executable(Engine
         src/main.cpp
         src/Shader.cpp
         src/stb_image.c
+        src/tinyglTF.cpp
+        src/mesh.cpp
         )
 add_custom_command(TARGET Engine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -24,11 +28,17 @@ target_compile_definitions(Engine PRIVATE GLEW_STATIC)
 # set_target_properties(Engine PROPERTIES
 #     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 # )
+set(BUILD_SHARED_LIBS OFF)
+
 target_include_directories(Engine PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/vendor
     ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glfw-3.4/include
     ${CMAKE_CURRENT_SOURCE_DIR}/vendor/glew-2.3.1/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/vendor/assimp-6.0.5/inlcude
     ${CMAKE_CURRENT_SOURCE_DIR}/src/include
     )
 
-target_link_libraries(Engine PRIVATE glfw glew_s)
+target_link_libraries(Engine PRIVATE 
+        glfw
+        glew_s
+        assimp)
