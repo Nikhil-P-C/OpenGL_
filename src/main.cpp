@@ -7,6 +7,7 @@
 #include <random>
 #include <assimp/Importer.hpp>
 #include <filesystem>
+#include <fstream>
 
 #include "tinyglTF.h"
 #include "stb_image.h"
@@ -96,7 +97,7 @@ int main () {
     GLFWwindow* window = glfwCreateWindow(1280, 720, "OpenGL", NULL, NULL);
     glfwMakeContextCurrent(window);
     glViewport(0, 0, 1280, 720);
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
     if(glewInit() != GLEW_OK) {
         std::cout << "Failed to initialize GLEW" << std::endl;
         return -1;
@@ -111,15 +112,19 @@ int main () {
 
     tinygltf::TinyGLTF loader;
     tinygltf::Model model3d;
-
+    std::cout <<"file exist:" << std::filesystem::exists("res/model/2b_nier_automata.glb") << '\n';
+    std::ifstream file("res/model/2b_nier_automata.glb", std::ios::binary);
+    std::cout <<"file opened:" << file.is_open() << '\n';
+    std::cout <<"is regular file:" << std::filesystem::is_regular_file("res/model/2b_nier_automata.glb") << '\n';
     std::string err, warn;
     std::cout<<std::filesystem::current_path();
     bool ok = loader.LoadBinaryFromFile(
         &model3d,
         &err,
         &warn,
-        "C:/Users/LENOVO/Desktop/project/cpp/OpenGl/build/Debug/res/model/rei.glb"
+        "res/model/leon.glb"
     );
+
 
     if (!warn.empty())
         std::cout << warn << '\n';
@@ -129,6 +134,15 @@ int main () {
 
     if (!ok)
         std::cout << "Failed to load model\n";
+    std::cout << "Meshes: " << model3d.meshes.size() << '\n';
+
+    for (size_t i = 0; i < model3d.meshes.size(); i++)
+    {
+        std::cout << "Mesh " << i
+              << " primitives: "
+              << model3d.meshes[i].primitives.size()
+              << '\n';
+    }
     const tinygltf::Mesh& mesh = model3d.meshes[0];
 
     const tinygltf::Primitive& primitive = mesh.primitives[0];
@@ -141,8 +155,6 @@ int main () {
 
     const float* positions =reinterpret_cast<const float*>(&positionBuffer.data[positionView.byteOffset + positionAccessor.byteOffset]);
     
-
-
     const tinygltf::Accessor& indexAccessor =model3d.accessors[primitive.indices];
 
     const tinygltf::BufferView& indexView =model3d.bufferViews[indexAccessor.bufferView];
@@ -176,15 +188,45 @@ int main () {
 
 
     const tinygltf::Material& material =model3d.materials[primitive.material];
-    
-    int textureIndex =material.pbrMetallicRoughness.baseColorTexture.index;
-    const tinygltf::Texture& textureModel =model3d.textures[textureIndex];
-    const tinygltf::Image& image =model3d.images[textureModel.source];
-    const tinygltf::Accessor& texAccessor =model3d.accessors[primitive.attributes.find("TEXCOORD_0")->second];
-    const tinygltf::BufferView& texView =model3d.bufferViews[texAccessor.bufferView];
-    const tinygltf::Buffer& texBuffer =model3d.buffers[texView.buffer];
+    int imgComponent = 3;
+	int imgHeight = 0;
+	int imgWidth = 0;
+	const char* imgData = nullptr;
+    if (primitive.material >= 0)
+    {
+        const tinygltf::Material& material = model3d.materials[primitive.material];
 
-    const float* texCoords =reinterpret_cast<const float*>(&texBuffer.data[texView.byteOffset + texAccessor.byteOffset]);
+        int textureIndex = material.pbrMetallicRoughness.baseColorTexture.index;
+
+        if (textureIndex >= 0)
+        {
+            const tinygltf::Texture& texture = model3d.textures[textureIndex];
+            const tinygltf::Image& image = model3d.images[texture.source];
+            imgComponent = image.component;
+            imgHeight = image.height;
+            imgWidth = image.width;
+            imgData = reinterpret_cast<const char*>(image.image.data());
+        }
+        else std::cout << "no texture image\n";
+    }
+    auto uvIt = primitive.attributes.find("TEXCOORD_0");
+    const float* texCoords;
+    int texCount = 0;
+    if (uvIt != primitive.attributes.end())
+    {
+        const tinygltf::Accessor& texAccessor =model3d.accessors[uvIt->second];
+        const tinygltf::BufferView& texView =model3d.bufferViews[texAccessor.bufferView];
+        const tinygltf::Buffer& texBuffer =model3d.buffers[texView.buffer];
+        texCoords = reinterpret_cast<const float*>(&texBuffer.data[texView.byteOffset + texAccessor.byteOffset]);
+
+		texCount = texAccessor.count;
+    }
+    else
+    {
+        std::cout << "Model has no texture coordinates.\n";
+    }
+    
+
 
     glEnable(GL_DEPTH_TEST);
     float vertices[] = {
@@ -236,7 +278,7 @@ int main () {
         1,2,3
     };
     std::cout << "Index count: " << indices.size() << '\n';
-    std::cout << "Position ptr: " << (void*)positions << '\n';
+    std::cout << "\nPosition ptr: " << (void*)positions << '\n';
     unsigned int VAO =0;
     glGenVertexArrays(1,&VAO);
     glBindVertexArray(VAO);
@@ -255,7 +297,7 @@ int main () {
     unsigned int uvVBO=0 ;
     glGenBuffers(1, &uvVBO);
     glBindBuffer(GL_ARRAY_BUFFER, uvVBO);
-    glBufferData(GL_ARRAY_BUFFER,texAccessor.count * 2 * sizeof(float),texCoords,GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,texCount * 2 * sizeof(float),texCoords,GL_STATIC_DRAW);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
     glError();
@@ -274,9 +316,10 @@ int main () {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
     glError();
-    GLenum format = image.component == 4 ? GL_RGBA : GL_RGB;
 
-    glTexImage2D(GL_TEXTURE_2D,0,format,image.width,image.height,0,format,GL_UNSIGNED_BYTE,image.image.data());
+    GLenum format = imgComponent == 4 ? GL_RGBA : GL_RGB;
+
+    glTexImage2D(GL_TEXTURE_2D,0,format,imgWidth,imgHeight,0,format,GL_UNSIGNED_BYTE,imgData);
     glGenerateMipmap(GL_TEXTURE_2D);
     glError();
     
@@ -285,13 +328,13 @@ int main () {
     
     std::mt19937 rng(12345);
 
-    std::uniform_real_distribution<float> xDist(-200.0f, 200.0f);
-    std::uniform_real_distribution<float> yDist(-100.0f, 100.0f);
-    std::uniform_real_distribution<float> zDist(-200.0f, 200.0f);
+    std::uniform_real_distribution<float> xDist(-20.0f, 20.0f);
+    std::uniform_real_distribution<float> yDist(-10.0f, 10.0f);
+    std::uniform_real_distribution<float> zDist(-20.0f, 20.0f);
 
     std::vector<glm::mat4> modelMatrices;
 
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i <20; i++)
     {
         glm::mat4 model = glm::translate(glm::mat4(1.0f),
                                          glm::vec3(xDist(rng),yDist(rng),zDist(rng)));
@@ -312,19 +355,17 @@ int main () {
     glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 10.0f);
     // glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f); already defined globally
     glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
-
+    double lasttime = glfwGetTime();
+    double nowtime =0;
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouseCallback);
+
     while(!glfwWindowShouldClose(window)) {
+        
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glm::mat4 view = glm::lookAt(cameraPos,cameraPos + cameraFront,cameraUp);
-
-        int viewloc= glGetUniformLocation(shader.m_ID,"u_view");
-        glUniformMatrix4fv(viewloc,1,GL_FALSE,glm::value_ptr(view));
         
         
-
-        int projloc =glGetUniformLocation(shader.m_ID,"u_projection");
-        glUniformMatrix4fv(projloc,1,GL_FALSE,glm::value_ptr(projection));
         glClearColor(1.0f, 0.5f, 0.0f, 1.0f);
         
         {  
@@ -335,10 +376,11 @@ int main () {
         glBindVertexArray(VAO);
         
         for(auto& model : modelMatrices){
-            model = glm::rotate(model,1.0f,glm::vec3(0.0f,1.0f,0.0f));
-            int modelloc=0;
-            modelloc = glGetUniformLocation(shader.m_ID,"u_model");
-            glUniformMatrix4fv(modelloc,1,GL_FALSE,glm::value_ptr(model));
+            // model = glm::rotate(model,1.0f,glm::vec3(0.0f,1.0f,0.0f));
+            glm::mat4 PVM = projection* view* model;
+            int PVMloc=0;
+            PVMloc= glGetUniformLocation(shader.m_ID,"u_PVM");
+            glUniformMatrix4fv(PVMloc,1,GL_FALSE,glm::value_ptr(PVM));
             glDrawElements(GL_TRIANGLES,indices.size(),GL_UNSIGNED_INT,0); 
         }
         
@@ -348,10 +390,9 @@ int main () {
         if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, 1);
         }
-        float speed = 0.3f;
+        float speed = 0.2f;
         float yaw = -90.0f;
         float pitch = 0.0f;
-        glfwSetCursorPosCallback(window, mouseCallback);
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             cameraPos += speed * cameraFront;
@@ -367,7 +408,12 @@ int main () {
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
             cameraPos -= speed * right;
 
-        }    
+        nowtime = glfwGetTime();
+        double deltaTime = nowtime - lasttime;
+        lasttime =nowtime;
+        std::cout<<"frametime:"<<deltaTime*1000<<"\n";
+
+    }    
         // cameraFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
         // cameraFront.y = sin(glm::radians(pitch));
         // cameraFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
