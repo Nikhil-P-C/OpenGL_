@@ -3,11 +3,46 @@
 #include <vector>
 #include <fstream>
 
+#include <assimp/Importer.hpp>
 #include <glm/glm.hpp>
 #include "mesh.h"
+#include "glError.h"
+mesh::mesh(std::vector<Vertex> vertices,std::vector<unsigned int> indices,std::vector<Texture> textures){
+    m_vertices = vertices;
+    m_faces = indices;
+    m_textures =textures;
 
+    setupMesh();
+}
+void mesh::setupMesh(){
+    glCall(glGenVertexArrays(1,&m_VAO));
+    glCall(glGenBuffers(1,&m_VBO));
+    glCall(glGenBuffers(1,&m_IBO));
 
+    glCall(glBindVertexArray(m_VAO));
 
+    glCall(glBindBuffer(GL_ARRAY_BUFFER,m_VBO));
+    glCall(glBufferData(GL_ARRAY_BUFFER,m_vertices.size()*sizeof(Vertex),&m_vertices[0],GL_STATIC_DRAW));
+
+    glCall(glBindBuffer(GL_ARRAY_BUFFER,m_IBO));
+    glCall(glBufferData(GL_ARRAY_BUFFER,m_faces.size() * sizeof(unsigned int), &m_faces[0],GL_STATIC_DRAW));
+
+    glCall(glEnableVertexAttribArray(0));
+    glCall(glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(void*) 0));
+
+    glCall(glEnableVertexAttribArray(1));
+    glCall(glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(void*) offsetof(Vertex,normal)));
+
+    glCall(glEnableVertexAttribArray(2));
+    glCall(glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(void*) offsetof(Vertex,texCoord)));
+
+    glCall(glBindVertexArray(0));
+}
+void mesh::draw(){
+    glBindVertexArray(m_VAO);
+    glDrawElements(GL_TRIANGLES, m_faces.size(), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
 Vertex mesh::loadOBJModel(const std::string& filepath){
     Vertex vertex;
     std::ifstream model = std::ifstream(filepath);
@@ -52,21 +87,21 @@ Vertex mesh::loadOBJModel(const std::string& filepath){
             }
             if (face.size() == 3)
             {
-                vertex.faces.push_back(face[0]);
-                vertex.faces.push_back(face[1]);
-                vertex.faces.push_back(face[2]);
+                m_faces.push_back(face[0]);
+                m_faces.push_back(face[1]);
+                m_faces.push_back(face[2]);
             }
             else if (face.size() == 4)
             {
             // Triangle 1
-                vertex.faces.push_back(face[0]);
-                vertex.faces.push_back(face[1]);
-                vertex.faces.push_back(face[2]);
+                m_faces.push_back(face[0]);
+                m_faces.push_back(face[1]);
+                m_faces.push_back(face[2]);
 
             // Triangle 2
-                vertex.faces.push_back(face[0]);
-                vertex.faces.push_back(face[2]);
-                vertex.faces.push_back(face[3]);
+                m_faces.push_back(face[0]);
+                m_faces.push_back(face[2]);
+                m_faces.push_back(face[3]);
             }
             
         }

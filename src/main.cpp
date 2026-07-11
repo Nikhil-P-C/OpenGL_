@@ -8,6 +8,7 @@
 #include <assimp/Importer.hpp>
 #include <filesystem>
 #include <fstream>
+#include "glError.h"
 
 #include "tinyglTF.h"
 #include "stb_image.h"
@@ -59,6 +60,7 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 
     cameraFront = glm::normalize(front);
 }
+
 unsigned int glError(){
     unsigned int error =glGetError();
 
@@ -70,7 +72,7 @@ unsigned int glError(){
 }
 int main () {
     
-    mesh OBJ;
+    
     // Vertex vertex = OBJ.loadOBJModel("res/model/Male.OBJ");
 
 
@@ -122,7 +124,7 @@ int main () {
         &model3d,
         &err,
         &warn,
-        "res/model/leon.glb"
+        "res/model/kaine.glb"
     );
 
 
@@ -145,7 +147,7 @@ int main () {
     }
     const tinygltf::Mesh& mesh = model3d.meshes[0];
 
-    const tinygltf::Primitive& primitive = mesh.primitives[0];
+    const tinygltf::Primitive& primitive = mesh.primitives[18];
 
     const tinygltf::Accessor& positionAccessor =model3d.accessors[primitive.attributes.find("POSITION")->second];
 
@@ -163,9 +165,6 @@ int main () {
 
     std::vector<unsigned int> indices;
 
-
-
-    
 
 
     if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
@@ -381,7 +380,7 @@ int main () {
             int PVMloc=0;
             PVMloc= glGetUniformLocation(shader.m_ID,"u_PVM");
             glUniformMatrix4fv(PVMloc,1,GL_FALSE,glm::value_ptr(PVM));
-            glDrawElements(GL_TRIANGLES,indices.size(),GL_UNSIGNED_INT,0); 
+            glCall(glDrawElements(GL_TRIANGLES,indices.size(),GL_UNSIGNED_INT,0));
         }
         
         }
